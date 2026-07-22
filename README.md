@@ -12,7 +12,7 @@
 
 ## Tổng Quan
 
-Lab mô phỏng môi trường giám sát bảo mật cloud của một tổ chức nhỏ trên AWS Free Tier, sử dụng CloudTrail và GuardDuty để ghi log/phát hiện threat, đẩy về Wazuh SIEM tự triển khai để phân tích và cảnh báo.
+Lab mô phỏng môi trường giám sát bảo mật cloud của một tổ chức nhỏ trên AWS Free Tier, sử dụng CloudTrail để ghi log/phát hiện threat, đẩy về Wazuh SIEM tự triển khai để phân tích và cảnh báo.
 
 **Mục tiêu thực hành:**
 
