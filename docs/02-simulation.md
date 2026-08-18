@@ -41,7 +41,7 @@ Mô phỏng các sự kiện bảo mật trên AWS để sinh CloudTrail event t
 ./simulate/s3-bucket-policy-tampering.sh
 ```
 
-<img width="1053" height="45" alt="Screenshot 2026-07-21 102306" src="https://github.com/user-attachments/assets/95748bec-abe3-4c81-a6e7-195f7ff2db32" />
+<img width="969" height="466" alt="image" src="https://github.com/user-attachments/assets/9484e0d5-45bb-4670-bac3-2a203c6f91dd" />
 
 - Trong controlled simulation, script thực hiện các bước sau:
 
