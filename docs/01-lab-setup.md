@@ -76,9 +76,10 @@
 
 <img width="1919" height="770" alt="image" src="https://github.com/user-attachments/assets/f5b61979-18e6-46c7-bb49-b866e10251a2" />
 
-### Tạo IAM user riêng cho lab
+### Tạo IAM user cho Wazuh collector
 
-- Theo Best Practice của AWS, nên tạo một IAM user riêng để thực hiện các công việc hàng ngày, tránh dùng tài khoản root cho việc này.
+- Trong lab này tôi tạo một IAM user riêng để Wazuh đọc CloudTrail log từ S3. User này được dùng như **collector identity**, không dùng chung với attacker machine hoặc tài khoản quản trị.
+- AWS hiện khuyến nghị human user sử dụng federation/IAM Identity Center và temporary credentials. Việc sử dụng IAM user với long-lived access key ở đây là lựa chọn đơn giản cho môi trường lab local.
 - Đầu tiên, tìm kiếm dịch vụ **IAM** trên thanh tìm kiếm.
 
 <img width="1147" height="866" alt="image" src="https://github.com/user-attachments/assets/3e8ec7f0-9aae-4ac9-9e52-4cd9928fb613" />
@@ -91,7 +92,7 @@
 
 <img width="1906" height="194" alt="image" src="https://github.com/user-attachments/assets/440ac34f-81b0-4977-b182-a694d3a39efa" />
 
-- Như hình dưới, cần cung cấp **Username** (đặt tên tùy ý). Sau đó tick thêm **Provide user access to the AWS Management Console - optional** để có thể thao tác trên giao diện web nếu không tick, account này chỉ dùng được qua CLI. Tôi chọn **Custom password** và đặt mật khẩu riêng, đồng thời bỏ tick **Users must create a new password at next sign-in - Recommended** vì đây là môi trường lab mô phỏng nên không cần thiết. Sau đó nhấn **Next** để tiếp tục.
+- Như hình dưới, cần cung cấp **Username**. Trong lúc dựng lab tôi có bật **Provide user access to the AWS Management Console** để tiện kiểm tra cấu hình bằng giao diện web. Tuy nhiên, một collector identity chỉ dùng cho Wazuh đọc log không bắt buộc phải có console password. Trong production nên chỉ cấp đúng loại credential thực sự cần thiết. Sau đó nhấn **Next** để tiếp tục.
 
 <img width="1885" height="845" alt="image" src="https://github.com/user-attachments/assets/ebe96ba2-08ca-43f2-844b-df72ec9fe057" />
 
@@ -111,8 +112,9 @@
 
 <img width="530" height="216" alt="image" src="https://github.com/user-attachments/assets/53ff1055-1522-44f3-994f-1573e6ab222e" />
 
-- Bây giờ tôi sẽ thêm các policy cần thiết để cho user mà tôi vừa mới tạo được có các quyền sử dụng các hành động của s3 như **GetObject**, **ListBucket**
-- Dưới đây là đoạn Policy
+- Bây giờ tôi sẽ cấp quyền tối thiểu để collector đọc CloudTrail log trong S3. Hai action chính cần dùng trong lab là **s3:GetObject** và **s3:ListBucket**.
+- Không cấp `AdministratorAccess`, `s3:PutObject` hoặc `s3:DeleteObject` cho collector vì các quyền đó không cần thiết cho việc đọc log.
+- Dưới đây là đoạn policy:
 
 ```
 {
@@ -138,11 +140,11 @@
 
 <img width="282" height="645" alt="image" src="https://github.com/user-attachments/assets/4a53af36-a4c3-413b-9e71-91c87fa75277" />
 
-- Tiếp theo ta sẽ chọn vào user ta vừa mới tạo kéo xuống. Và mục **Add permission** xong rồi ấn vào **create inline police**.
+- Tiếp theo chọn user vừa tạo, kéo xuống mục **Add permissions** và chọn **Create inline policy**.
 
 <img width="1401" height="357" alt="image" src="https://github.com/user-attachments/assets/337a72b6-c904-4b28-8ae0-77ab5d008a07" />
 
-- Ta sẽ tiến hành đổi qua tab json. và nhập đoạn policy ở trên. thay **<bucket_cua_ban>** thành tên bucket của ta.
+- Chuyển sang tab **JSON** và nhập policy ở trên. Thay **<bucket_cua_ban>** bằng tên bucket dùng để lưu CloudTrail log.
 
 <img width="1377" height="542" alt="image" src="https://github.com/user-attachments/assets/0b05fc17-03a1-4d71-9e7b-f91e62ea5edc" />
 
@@ -154,7 +156,7 @@
 
 <img width="1332" height="295" alt="image" src="https://github.com/user-attachments/assets/b3742a01-9cd2-412f-918b-f18a38615f48" />
 
-- Sau khi đặt tên policy ta tiến hành nhấn vào **Creat Policy**
+- Sau khi đặt tên policy, nhấn **Create policy**.
 
 <img width="1377" height="532" alt="image" src="https://github.com/user-attachments/assets/20f831cc-8fc3-4d49-9efc-8f17368acf7d" />
 
@@ -174,13 +176,15 @@
 
 <img width="1407" height="247" alt="image" src="https://github.com/user-attachments/assets/76265878-4948-4d86-880b-668d11d01378" />
 
-- Ở đây tôi sẽ chọn **General Purpose**. Và tiếp đó bọn **Global namespace**. Với tùy chọn này bạn nên đặt tên bucket với 1 cái tên chưa từng ai đặt trước đó. Các setting dưới ta sẽ để mặc định và nhấn vào **Create Bucket** để tạo bucket mới.
+- Ở đây tôi sẽ chọn **General Purpose**. Và tiếp đó chọn **Global namespace**. Với tùy chọn này bạn nên đặt tên bucket với 1 cái tên chưa từng ai đặt trước đó. Các setting dưới ta sẽ để mặc định và nhấn vào **Create Bucket** để tạo bucket mới.
 
 <img width="1377" height="567" alt="image" src="https://github.com/user-attachments/assets/2804ddd9-ab90-45a9-b717-3f22bbe42b84" />
 
 - Và như dưới ảnh tôi đã tạo bucket thành công.
 
 <img width="1381" height="462" alt="image" src="https://github.com/user-attachments/assets/401617c4-7116-4434-9d2a-4891d30cff68" />
+
+- Trong lab này tôi giữ **Default encryption** của bucket ở **Server-side encryption with Amazon S3 managed keys (SSE-S3)**. Amazon S3 mặc định mã hóa các object mới bằng SSE-S3, vì vậy không cần tạo thêm KMS key cho mục tiêu của lab này.
 
 - Bây giờ ta sẽ tạo Trail mới và log vào bucket mà ta vừa mới tạo trước đó. Ta search tìm dịch vụ **CloudTrail**
 
@@ -194,12 +198,13 @@
 
 <img width="1377" height="482" alt="image" src="https://github.com/user-attachments/assets/794e862f-ed54-46c1-9cf1-f98b448326c6" />
 
-- Ta tạo AWS KMS alias. Xong rồi kéo xuống dưới nhấn **Next** để qua bước tiếp theo 
+- Tại phần **Log file SSE-KMS encryption**, tui để **Disabled** và không tạo KMS alias. Khi SSE-KMS không được bật, CloudTrail log file và digest file được mã hóa bằng **SSE-S3**, phù hợp với mục tiêu của lab và giúp Wazuh collector chỉ cần quyền đọc S3.
 
-<img width="547" height="123" alt="image" src="https://github.com/user-attachments/assets/96542ebf-ae62-4414-9255-910c53757a93" />
+- Sau đó kéo xuống và nhấn **Next** để qua bước tiếp theo.
 
-- Trong phần **Choose log events** ta sẽ để mặc định và nhấn **Next**.
-- Cuối cung phần cuối là **Review and create** sau khi kiểm tra tất cả mọi thứ ổn thì ta kéo xuống nhấn **Create Trail** để tiến hành tạo **Trail**
+- Trong phần **Choose log events**, Management Events được dùng để ghi nhận các control-plane action như IAM và thay đổi cấu hình S3. Ta giữ cấu hình phù hợp với lab rồi nhấn **Next**.
+- S3 object-level operation là Data Events và không được log mặc định, vì vậy phần Data Events sẽ được bật riêng ở bước bên dưới.
+- Cuối cùng là **Review and create**. Sau khi kiểm tra cấu hình, nhấn **Create trail**.
 - Sau khi tạo xong thì nó sẽ tự động logging và tui thì không muốn mất tiền oan nên tôi sẽ stop logging rồi khi thực hiện giả lập mới bật sau.
 
 <img width="937" height="45" alt="image" src="https://github.com/user-attachments/assets/84f493a4-a549-4795-8e62-06cf80f47490" />
@@ -230,9 +235,9 @@
 - Để tiết kiệm credit tối đa, tôi sẽ không cài Wazuh trên EC2 mà thay vào đó cài trên local, sau đó tích hợp CloudTrail vào.
 - Ở đây tôi sử dụng VMware Workstation để tạo máy ảo, và đã chuẩn bị sẵn một máy ảo Ubuntu có cài sẵn Wazuh để tiết kiệm thời gian. (Nếu bạn tò mò về cách cài đặt Wazuh, có thể xem các project khác của tôi ở bài này tôi sẽ tập trung chủ yếu vào phần tích hợp AWS.)
  
-**Cài đặt và đăng nhập AWS CLI sử dụng Access Key**
+**Cài đặt AWS CLI và cấu hình credential cho Wazuh collector**
  
-- Trên máy ảo Ubuntu, cần đăng nhập AWS CLI. Nếu chưa cài đặt AWS CLI, thực hiện các lệnh sau:
+- Trên máy ảo Ubuntu, Wazuh cần AWS credential có quyền đọc CloudTrail log trong S3. Nếu chưa cài AWS CLI, thực hiện các lệnh sau:
  
 ```
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -240,13 +245,13 @@ unzip awscliv2.zip
 sudo ./aws/install
 ```
 
-- Ta sử dụng lệnh dưới để cấu hình Access Key.
+- Trong lab local này tôi sử dụng access key của collector identity và lưu ở AWS CLI profile `default`:
 
 ```
 aws configure
 ```
 
-- Sau khi nhập lệnh trên xong thì câu lệnh sẽ yêu cầu ta nhập **Access key**. Bạn có thể xem cách lấy [**Access key tại đây**](https://www.youtube.com/watch?v=lntWTStctIE). Sau khi lấy xong thì điền vào dòng lệnh dưới. Enter để tiếp tục.
+- Lệnh sẽ yêu cầu **Access Key ID** và **Secret Access Key** của collector identity. Không sử dụng credential của attacker identity hoặc tài khoản root cho bước này.
 
 <img width="601" height="72" alt="Screenshot 2026-07-20 141806" src="https://github.com/user-attachments/assets/9c03d6a5-2b1a-441f-b4c5-52efb09eed22" />
 
@@ -254,37 +259,39 @@ aws configure
 
 <img width="242" height="20" alt="Screenshot 2026-07-20 142233" src="https://github.com/user-attachments/assets/aa4434ac-b269-465f-8be9-911cd74bafac" />
 
-- Ta sẽ nhập region. Thì dưới ảnh mặc định là singapore. Nên tôi sẽ để mặc định. Nhấn Enter để tiếp tục.
+- Ta sẽ nhập region. Thì dưới ảnh mặc định là singapore. Nên tui sẽ để mặc định. Nhấn Enter để tiếp tục.
 
 <img width="311" height="20" alt="Screenshot 2026-07-20 142329" src="https://github.com/user-attachments/assets/18f2d9b2-3ddf-42fd-9d7b-9cac22f36694" />
 
 - Tiếp theo tại phần **Default output format [None]:** ta cũng sẽ để mặc định. Và ta đã xong.
 
-- bây giờ ta sẽ cần set up để cho wazuh đọc được cái **access key**. Trước hết tạo thư mục.
+- Vì Wazuh manager chạy dưới context của `root`, ta copy AWS CLI credential/config vào `/root/.aws` để module có thể đọc profile `default`. Trước hết tạo thư mục:
 
 ```
 sudo mkdir -p /root/.aws
 ```
 
-- Xong rồi copy credentials
+- Copy file credentials:
 
 ```
 sudo cp ~/.aws/credentials /root/.aws/
 ```
 
-- Copy file config luôn
+- Copy file config:
 
 ```
 sudo cp ~/.aws/config /root/.aws/
 ```
 
-- Kiểm tra:
+- Giới hạn permission của credential files và kiểm tra lại:
 
 ```
+sudo chmod 600 /root/.aws/credentials
+sudo chmod 600 /root/.aws/config
 sudo ls -l /root/.aws
 ```
 
-> **Lưu ý bảo mật:** Vì Wazuh chạy trên máy local (không phải EC2), không thể dùng IAM Instance Role nên buộc phải dùng Access Key tĩnh. Trong môi trường production, nên ưu tiên IAM Role hoặc ít nhất xoay vòng (rotate) access key định kỳ.
+> **Lưu ý bảo mật:** Access key tĩnh không phải phương án authentication duy nhất của Wazuh. Tui dùng AWS profile vì lab chạy local và dễ tái tạo. Nếu triển khai Wazuh trên AWS hoặc môi trường hỗ trợ role-based authentication thì nên ưu tiên temporary credential/IAM role để hạn chế long-lived credential.
 
 **Cấu hình module AWS S3**
  
@@ -323,29 +330,27 @@ sudo systemctl restart wazuh-manager
 
 ## Test
 
-- Bây giờ tôi sẽ thực hiện khởi động 1 intance EC2. Xong rồi tắt nó ta vào dịch vụ **EC2**.
-- Xong rồi ấn vào **Lauch Instance**. 
+- Bây giờ tôi sẽ khởi tạo một EC2 instance để kiểm tra CloudTrail và Wazuh có nhận event hay không. Sau khi test xong cần terminate instance để tránh phát sinh chi phí.
+- Chọn **Launch instance**. 
 
 <img width="1395" height="556" alt="image" src="https://github.com/user-attachments/assets/82710f0c-b8bf-49ba-855d-ffd50d6074f7" />
 
-- Sau khi chọn cấu hình xong rồi ta ấn vào **Lauch Instance**. (Nhớ xóa luôn Instance nếu xong bước test)
+- Sau khi chọn cấu hình, nhấn **Launch instance**. Nhớ terminate instance sau khi hoàn thành bước test.
   
 <img width="587" height="552" alt="image" src="https://github.com/user-attachments/assets/58dc551f-28d9-4568-b97d-464810fc7e44" />
 
-- Tiếp đó ta sễ đợi Wazuh nhận log thì đợi khá lâu tầm 5 - 15p. Tiếp theo ta sẽ vào mục **Cloud Security** trên **Wazuh** rồi vào **Amazon Web Service**
+- Sau đó đợi Wazuh thu thập CloudTrail log. Thời gian hiển thị có thể không tức thời. Tiếp theo vào **Cloud Security** trên Wazuh rồi chọn **Amazon Web Services**.
 
 <img width="1411" height="637" alt="image" src="https://github.com/user-attachments/assets/33b0af58-45e2-47cd-bce8-d5fad7cc0d58" />
 
-- Và dưới ảnh là các Dashboard có sẳng.
+- Ảnh dưới là dashboard sau khi Wazuh đã nhận AWS event.
 
 <img width="1906" height="927" alt="Screenshot 2026-07-20 154713" src="https://github.com/user-attachments/assets/11922c91-42dd-4ef6-ae73-ceacdbceba85" />
 
-- Ta qua tag **Event**. Và như hình dưới là các log về **EC2**.
+- Chuyển sang tab **Events**. Hình dưới cho thấy các event liên quan đến EC2.
 
 <img width="1423" height="582" alt="image" src="https://github.com/user-attachments/assets/025b57bb-ffbe-473a-b42f-67fa0a7a1236" />
 
-- Mình sẽ mở một event bất kỳ. Ở đây có thể thấy data.aws.eventName là RunInstances, nghĩa là đã có một API call để tạo EC2 instance. Đây là lý do CloudTrail rất quan trọng, vì nó ghi lại toàn bộ API activity, giúp chúng ta giám sát và phát hiện các hành động bất thường hoặc đáng ngờ trên AWS.
+- Mở một event và kiểm tra `data.aws.eventName`. Trong ví dụ này giá trị là `RunInstances`, cho thấy CloudTrail đã ghi nhận API activity liên quan tới việc tạo EC2 instance. CloudTrail cung cấp audit telemetry, còn Wazuh sử dụng telemetry đó để tạo alert và hỗ trợ quá trình monitoring/investigation.
 
 <img width="942" height="362" alt="Screenshot 2026-07-20 154935" src="https://github.com/user-attachments/assets/c16f776a-5636-4dfb-b414-11284b1c30e7" />
-
-
