@@ -200,7 +200,11 @@
 
 - Tại phần **Log file SSE-KMS encryption**, tui để **Disabled** và không tạo KMS alias. Khi SSE-KMS không được bật, CloudTrail log file và digest file được mã hóa bằng **SSE-S3**, phù hợp với mục tiêu của lab và giúp Wazuh collector chỉ cần quyền đọc S3.
 
+<img width="1303" height="86" alt="image" src="https://github.com/user-attachments/assets/54b28a32-10e2-4c62-a04a-8904de6242f0" />
+
 - Sau đó kéo xuống và nhấn **Next** để qua bước tiếp theo.
+- 
+<img width="1882" height="785" alt="image" src="https://github.com/user-attachments/assets/54b31e53-5c12-47be-980c-76d5f61f129e" />
 
 - Trong phần **Choose log events**, Management Events được dùng để ghi nhận các control-plane action như IAM và thay đổi cấu hình S3. Ta giữ cấu hình phù hợp với lab rồi nhấn **Next**.
 - S3 object-level operation là Data Events và không được log mặc định, vì vậy phần Data Events sẽ được bật riêng ở bước bên dưới.
