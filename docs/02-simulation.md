@@ -27,18 +27,6 @@ Mô phỏng các sự kiện bảo mật trên AWS để sinh CloudTrail event t
 ./simulate/iam-persistence.sh
 ```
 
-- Sau khi chạy xong, kiểm tra output của script và CloudTrail event tương ứng.
-
-<!-- Chụp lại screenshot sau khi chạy phiên bản iam-persistence.sh mới và thêm vào đây. -->
-
-- Các CloudTrail event chính cần kiểm tra:
-
-| Event | Mô tả |
-| --- | --- |
-| CreateUser | Tạo một IAM user mới. |
-| CreateAccessKey | Tạo programmatic credential cho IAM user mới. |
-| AttachUserPolicy | Gắn managed policy vào IAM user. Trong simulation policy được sử dụng là `AdministratorAccess`. |
-
 ## Kịch bản 2: S3 Bucket Policy Tampering
 
 **Mô tả:** Mô phỏng hành vi tạo bucket và object, kiểm tra object đang truy cập được, sau đó áp dụng bucket policy có explicit `Deny` đối với `s3:GetObject` và kiểm tra kết quả truy cập sau khi policy có hiệu lực.
