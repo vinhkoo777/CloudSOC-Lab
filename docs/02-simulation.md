@@ -2,52 +2,82 @@
 
 ## Mục đích
 
-Mô phỏng các sự kiện bảo mật trên AWS (IAM privilege escalation, unauthorized S3 access) để sinh log/event thật trên CloudTrail. Log này sẽ được dùng làm input để viết và test detection rule ở bước [03-detection-analysis.md](03-detection-analysis.md).
+Mô phỏng các sự kiện bảo mật trên AWS để sinh CloudTrail event thật. Các event này sẽ được dùng để viết, test và phân tích detection rule ở bước [03-detection-analysis.md](03-detection-analysis.md).
 
-> Ở đây tôi sẽ sử dụng một máy ảo riêng (đóng vai "attacker machine") để chạy các script mô phỏng, tách biệt với máy Wazuh nhằm mô phỏng đúng luồng thực tế: attacker hành động trên AWS -> CloudTrail ghi log -> S3 -> Wazuh phát hiện.
+> Ở đây ta sử dụng một máy ảo riêng đóng vai trò "attacker machine" để chạy script mô phỏng, tách biệt với máy Wazuh. Máy attacker chỉ tạo AWS activity, còn CloudTrail và Wazuh đảm nhiệm phần logging và monitoring.
 
-## Kịch bản 1: IAM Privilege Escalation
+## Kịch bản 1: IAM Persistence via Privileged Backdoor Account
 
-**Case:** Giả định admin bị **phishing**, lộ access key. Attacker dùng key đó tạo user mới, gắn `AdministratorAccess` và policy `iam:*` để duy trì persistence. MITRE T1078 - Valid Accounts.
+**Case:** Giả định attacker đã có được access key của một privileged AWS identity. Attacker sử dụng quyền hiện có để tạo một IAM user mới, tạo access key cho user đó và gắn `AdministratorAccess`. Mục tiêu của scenario là mô phỏng hành vi tạo một privileged identity thứ hai để duy trì access.
 
-**Script:** [`simulate/iam-privilege-escalation.sh`](../simulate/iam-privilege-escalation.sh)
+**MITRE ATT&CK:**
+
+- `T1078.004 - Valid Accounts: Cloud Accounts`: mô tả việc attacker sử dụng compromised cloud credential.
+- `T1136.003 - Create Account: Cloud Account`: tương ứng với `CreateUser`.
+- `T1098.001 - Additional Cloud Credentials`: tương ứng với `CreateAccessKey`.
+- `T1098.003 - Additional Cloud Roles`: tương ứng với việc thêm permissions bằng `AttachUserPolicy`.
+
+> **Lưu ý:** Scenario này được xem chủ yếu là persistence. Attacker đã có privileged access ngay từ đầu nên tôi không gọi chuỗi này là privilege escalation.
+
+**Script:** [`simulate/iam-persistence.sh`](../simulate/iam-persistence.sh)
 
 - Chạy script:
+
+```bash
+./simulate/iam-persistence.sh
 ```
-./simulate/iam-privilege-escalation.sh
-```
 
-- Sau khi chạy xong sẽ có kết quả giống ở dưới 
+- Sau khi chạy xong, kiểm tra output của script và CloudTrail event tương ứng.
 
-<img width="652" height="52" alt="Screenshot 2026-07-20 184736" src="https://github.com/user-attachments/assets/5c2b2ff9-0155-4351-9516-18e3b6f54bab" />
+<!-- Chụp lại screenshot sau khi chạy phiên bản iam-persistence.sh mới và thêm vào đây. -->
 
+- Các CloudTrail event chính cần kiểm tra:
+
+| Event | Mô tả |
+| --- | --- |
+| CreateUser | Tạo một IAM user mới. |
+| CreateAccessKey | Tạo programmatic credential cho IAM user mới. |
+| AttachUserPolicy | Gắn managed policy vào IAM user. Trong simulation policy được sử dụng là `AdministratorAccess`. |
 
 ## Kịch bản 2: S3 Bucket Policy Tampering
- 
-**Mô tả:** Mô phỏng hành vi tạo bucket, gắn policy Deny, sau đó thử truy cập object bị từ chối tương ứng kỹ thuật thay đổi bucket policy gây gián đoạn truy cập.
- 
+
+**Mô tả:** Mô phỏng hành vi tạo bucket và object, kiểm tra object đang truy cập được, sau đó áp dụng bucket policy có explicit `Deny` đối với `s3:GetObject` và kiểm tra kết quả truy cập sau khi policy có hiệu lực.
+
 **Script:** [`simulate/s3-bucket-policy-tampering.sh`](../simulate/s3-bucket-policy-tampering.sh)
- 
+
 - Chạy script:
-```
+
+```bash
 ./simulate/s3-bucket-policy-tampering.sh
 ```
 
 <img width="1053" height="45" alt="Screenshot 2026-07-21 102306" src="https://github.com/user-attachments/assets/95748bec-abe3-4c81-a6e7-195f7ff2db32" />
 
+- Trong controlled simulation, script thực hiện các bước sau:
+
+1. Tạo S3 bucket.
+2. Upload `test-object.txt`.
+3. Kiểm tra object trước khi thay đổi policy.
+4. Gắn bucket policy có `Effect: Deny` cho action `s3:GetObject`.
+5. Thực hiện lại `HeadObject` và ghi nhận `AccessDenied`.
+
+> Ta không gắn MITRE ATT&CK technique cho `PutBucketPolicy` chỉ vì đây là một configuration change. MITRE mapping chỉ được sử dụng khi behavior trong lab khớp đủ rõ với technique.
+
 ## Xác nhận log đã ghi nhận trên Wazuh
- 
-- Các sự kiện AWS đã được thu thập và hiển thị trong **Cloud Security -> Amazon Web Services**.
- 
+
+- Các sự kiện AWS được thu thập và hiển thị trong **Cloud Security > Amazon Web Services**.
+
 <img width="1882" height="876" alt="Screenshot 2026-07-20 190320" src="https://github.com/user-attachments/assets/ac539be0-782b-49ff-93e4-270a6e4bfbd8" />
 
 | Event | Mô tả |
 | --- | --- |
 | CreateUser | Tạo mới một IAM User. |
-| AttachUserPolicy | Gán IAM Policy cho User. |
-| PutUserPolicy | Thêm Inline Policy cho User. |
-| ListUsers | Liệt kê danh sách IAM Users. |
+| CreateAccessKey | Tạo access key cho IAM User. |
+| AttachUserPolicy | Gán managed policy cho IAM User. |
 | CreateBucket | Tạo mới S3 Bucket. |
-| PutBucketPolicy | Cập nhật Bucket Policy trên S3 Bucket. |
+| PutObject | Upload object lên S3 Bucket. |
+| PutBucketPolicy | Cập nhật Bucket Policy. |
+| HeadObject | Đọc metadata của object. |
+| HeadObject + AccessDenied | Request đọc metadata bị từ chối. |
 
-
+> Một API event xuất hiện trong CloudTrail không có nghĩa event đó chắc chắn malicious. Khi phân tích cần xem thêm actor identity, source IP, resource, thời gian và các event liên quan.
