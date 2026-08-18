@@ -61,23 +61,18 @@ Phân tích các alert do Wazuh sinh ra tương ứng với 2 kịch bản đã 
 <img width="937" height="107" alt="image" src="https://github.com/user-attachments/assets/90d968be-4900-49cd-b831-80a55b3df06b" />
 
 - Event này được mapping với `T1136.003 - Create Account: Cloud Account`.
-
 - Tuy nhiên, `CreateUser` tự nó chưa đủ để kết luận malicious vì administrator có thể tạo IAM user hợp lệ trong hoạt động bình thường.
 
 **2. CreateAccessKey**
 
 - Sau khi user được tạo, script tạo access key cho user đó. Đây là programmatic credential có thể được sử dụng để truy cập AWS API.
-
 - Event này được mapping với `T1098.001 - Additional Cloud Credentials`.
-
 - Khi điều tra thực tế cần kiểm tra user nào được tạo key, principal nào thực hiện action, source IP và thời điểm xảy ra event.
 
 **3. AttachUserPolicy**
 
 - Tiếp theo, simulation gắn managed policy vào IAM user mới.
-
 - Trong controlled simulation, policy được gắn là **AdministratorAccess**.
-
 - Event `AttachUserPolicy` được mapping với `T1098.003 - Additional Cloud Roles` vì attacker đang thêm permissions cho cloud account do mình tạo.
 
 ### Kết luận
