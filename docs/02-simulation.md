@@ -27,6 +27,8 @@ Mô phỏng các sự kiện bảo mật trên AWS để sinh CloudTrail event t
 ./simulate/iam-persistence.sh
 ```
 
+<img width="961" height="500" alt="image" src="https://github.com/user-attachments/assets/a82d6736-7e4f-4560-9c67-283667fa140e" />
+
 ## Kịch bản 2: S3 Bucket Policy Tampering
 
 **Mô tả:** Mô phỏng hành vi tạo bucket và object, kiểm tra object đang truy cập được, sau đó áp dụng bucket policy có explicit `Deny` đối với `s3:GetObject` và kiểm tra kết quả truy cập sau khi policy có hiệu lực.
