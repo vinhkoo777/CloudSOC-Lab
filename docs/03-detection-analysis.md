@@ -58,22 +58,26 @@ Phân tích các alert do Wazuh sinh ra tương ứng với 2 kịch bản đã 
 
 - Theo scenario, attacker đang sử dụng credential của một privileged AWS identity và tạo một IAM user mới.
 
-<img width="918" height="267" alt="image" src="https://github.com/user-attachments/assets/d8833d27-b0f1-4bde-a8c6-39842de789ac" />
+<img width="453" height="239" alt="image" src="https://github.com/user-attachments/assets/80176e19-3a8c-426b-adb1-b6465b01d937" />
 
 - Kiểm tra trên AWS Console tại **IAM > Users**. Ảnh dưới cho thấy user mới được tạo sau khi chạy script.
 
-<img width="937" height="107" alt="image" src="https://github.com/user-attachments/assets/90d968be-4900-49cd-b831-80a55b3df06b" />
+<img width="1619" height="590" alt="image" src="https://github.com/user-attachments/assets/9a6aa0c3-9647-44b5-a781-a6fc736305f1" />
 
 - Event này được mapping với `T1136.003 - Create Account: Cloud Account`.
 - Tuy nhiên, `CreateUser` tự nó chưa đủ để kết luận malicious vì administrator có thể tạo IAM user hợp lệ trong hoạt động bình thường.
 
 **2. CreateAccessKey**
 
+<img width="551" height="446" alt="image" src="https://github.com/user-attachments/assets/0303fc55-927b-4489-abab-5a0cc0923110" />
+
 - Sau khi user được tạo, script tạo access key cho user đó. Đây là programmatic credential có thể được sử dụng để truy cập AWS API.
 - Event này được mapping với `T1098.001 - Additional Cloud Credentials`.
 - Khi điều tra thực tế cần kiểm tra user nào được tạo key, principal nào thực hiện action, source IP và thời điểm xảy ra event.
 
 **3. AttachUserPolicy**
+
+<img width="596" height="106" alt="image" src="https://github.com/user-attachments/assets/4e64bb0a-ca6a-4122-a9ce-1a809c7ad0e3" />
 
 - Tiếp theo, simulation gắn managed policy vào IAM user mới.
 - Trong controlled simulation, policy được gắn là **AdministratorAccess**.
