@@ -48,6 +48,10 @@ Phân tích các alert do Wazuh sinh ra tương ứng với 2 kịch bản đã 
 
 - Bây giờ ta thực hiện lại **simulation** để kiểm tra các custom rule.
 
+<img width="961" height="500" alt="image" src="https://github.com/user-attachments/assets/a82d6736-7e4f-4560-9c67-283667fa140e" />
+
+<img width="1907" height="632" alt="image" src="https://github.com/user-attachments/assets/42127e57-5405-46d4-b462-936bfc87305e" />
+
 ### Phân tích từng event
 
 **1. CreateUser**
