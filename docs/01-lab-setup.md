@@ -208,7 +208,10 @@
 
 - Trong phần **Choose log events**, Management Events được dùng để ghi nhận các control-plane action như IAM và thay đổi cấu hình S3. Ta giữ cấu hình phù hợp với lab rồi nhấn **Next**.
 - S3 object-level operation là Data Events và không được log mặc định, vì vậy phần Data Events sẽ được bật riêng ở bước bên dưới.
-- Cuối cùng là **Review and create**. Sau khi kiểm tra cấu hình, nhấn **Create trail**.
+- Cuối cùng là **Review and create**. Sau khi kiểm tra cấu hình, nhấn **Create trail**. Và như hình dưới thì ta đã tạo xong.
+
+<img width="539" height="416" alt="image" src="https://github.com/user-attachments/assets/cba907e0-ac17-4e2a-bc02-93ba8ba7d8f6" />
+
 - Sau khi tạo xong thì nó sẽ tự động logging và tui thì không muốn mất tiền oan nên tôi sẽ stop logging rồi khi thực hiện giả lập mới bật sau.
 
 <img width="937" height="45" alt="image" src="https://github.com/user-attachments/assets/84f493a4-a549-4795-8e62-06cf80f47490" />
