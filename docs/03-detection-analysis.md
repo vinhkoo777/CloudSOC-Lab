@@ -73,7 +73,6 @@ Phân tích các alert do Wazuh sinh ra tương ứng với 2 kịch bản đã 
 
 - Sau khi user được tạo, script tạo access key cho user đó. Đây là programmatic credential có thể được sử dụng để truy cập AWS API.
 - Event này được mapping với `T1098.001 - Additional Cloud Credentials`.
-- Khi điều tra thực tế cần kiểm tra user nào được tạo key, principal nào thực hiện action, source IP và thời điểm xảy ra event.
 
 **3. AttachUserPolicy**
 
@@ -91,7 +90,7 @@ Ba event cung cấp đủ context để analyst reconstruct lại activity theo 
 2. User mới được tạo access key.
 3. User mới được gắn `AdministratorAccess`.
 
-Các custom rule hiện tại là **event-level detection**. Project chưa triển khai một Wazuh sequence correlation rule cho cả ba event. Việc liên kết ba alert được thực hiện trong quá trình investigation bằng cách so sánh `eventTime`, actor identity, target user, source IP và `requestParameters`.
+Các custom rule hiện tại là **event-level detection**. Project chưa triển khai một Wazuh sequence correlation rule cho cả ba event. Việc liên kết ba alert được thực hiện trong quá trình investigation bằng cách so sánh `eventTime`, actor identity, target user và `requestParameters`.
 
 ### Detection Limitations
 
