@@ -114,20 +114,20 @@ Các custom rule hiện tại là **event-level detection**. Project chưa tri�
 ```xml
 <group name="aws,s3,amazon,">
 
-  <rule id="112101" level="7">
+  <rule id="211101" level="7">
     <if_sid>80200</if_sid>
     <field name="aws.eventName">^HeadObject$</field>
     <field name="aws.errorCode">^AccessDenied$</field>
     <description>AWS S3 - HeadObject request denied</description>
   </rule>
 
-  <rule id="112102" level="5">
+  <rule id="211102" level="5">
     <if_sid>80200</if_sid>
     <field name="aws.eventName">^CreateBucket$</field>
     <description>AWS S3 - New bucket created</description>
   </rule>
 
-  <rule id="112103" level="7">
+  <rule id="211103" level="7">
     <if_sid>80200</if_sid>
     <field name="aws.eventName">^PutBucketPolicy$</field>
     <description>AWS S3 - Bucket policy modified</description>
@@ -136,7 +136,7 @@ Các custom rule hiện tại là **event-level detection**. Project chưa tri�
 </group>
 ```
 
-> Rule `112103` chỉ xác nhận bucket policy đã được thay đổi. Rule không tự chứng minh policy có `Effect: Deny`. Trong controlled simulation tôi biết nội dung policy vì chính script tạo policy đó. Khi investigation thực tế phải kiểm tra policy document hoặc cấu hình bucket hiện tại.
+> Rule `211103` chỉ xác nhận bucket policy đã được thay đổi. Rule không tự chứng minh policy có `Effect: Deny`. Trong controlled simulation tôi biết nội dung policy vì chính script tạo policy đó. Khi investigation thực tế phải kiểm tra policy document hoặc cấu hình bucket hiện tại.
 
 > Tôi không gắn MITRE ATT&CK technique cho `PutBucketPolicy`, `CreateBucket` hoặc `HeadObject + AccessDenied` vì các event trong scenario này không có mapping đủ chính xác để gắn technique chỉ dựa trên event name.
 
